@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import 'dart:async';
+import 'dart:ui' show Offset, Size;
 
 import 'package:flutter/services.dart';
 
@@ -129,6 +130,28 @@ class MethodChannelWebViewPlatform implements WebViewPlatformController {
 
   @override
   Future<String> getTitle() => _channel.invokeMethod<String>("getTitle");
+
+  @override
+  Future<void> scrollTo(Offset offset) {
+    return _channel.invokeMethod<void>('scrollTo', <String, double>{'x': offset.dx, 'y': offset.dy});
+  }
+
+  @override
+  Future<void> scrollBy(Offset offset) {
+    return _channel.invokeMethod<void>('scrollBy', <String, double>{'x': offset.dx, 'y': offset.dy});
+  }
+
+  @override
+  Future<Offset> getScrollPosition() async {
+    final result = await _channel.invokeMapMethod<String, double>('getScrollPosition');
+    return Offset(result['x'], result['y']);
+  }
+
+  @override
+  Future<Size> getScrollExtent() async {
+    final result = await _channel.invokeMapMethod<String, double>('getScrollExtent');
+    return Size(result['width'], result['height']);
+  }
 
   /// Method channel implementation for [WebViewPlatform.clearCookies].
   static Future<bool> clearCookies() {

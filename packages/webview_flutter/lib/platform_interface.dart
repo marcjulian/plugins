@@ -278,6 +278,28 @@ abstract class WebViewPlatformController {
     throw UnimplementedError(
         "WebView getTitle is not implemented on the current platform");
   }
+
+  /// Set the absolute scrolled position of this view.
+  /// `offset` absolute position to scroll to in logical pixels.
+  Future<void> scrollTo(Offset offset) {
+    throw UnimplementedError("WebView scrollTo is not implemented on the current platform");
+  }
+
+  /// Move the scrolled position of this view.
+  /// `offset` relative position to scroll by in logical pixels.
+  Future<void> scrollBy(Offset offset) {
+    throw UnimplementedError("WebView scrollBy is not implemented on the current platform");
+  }
+
+  /// Return the absolute scroll position of this view in logical pixels.
+  Future<Offset> getScrollPosition() {
+    throw UnimplementedError("WebView getScrollPosition is not implemented on the current platform");
+  }
+
+  /// Return the scroll extent of this view in logical pixels.
+  Future<Size> getScrollExtent() {
+    throw UnimplementedError("WebView getScrollExtent is not implemented on the current platform");
+  }
 }
 
 /// A single setting for configuring a WebViewPlatform which may be absent.

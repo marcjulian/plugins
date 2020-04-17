@@ -676,6 +676,28 @@ class WebViewController {
   Future<String> getTitle() {
     return _webViewPlatformController.getTitle();
   }
+
+  /// Set the absolute scrolled position of this view.
+  /// `offset` absolute position to scroll to in logical pixels.
+  Future<void> scrollTo(Offset offset) {
+    return _webViewPlatformController.scrollTo(offset);
+  }
+
+  /// Move the scrolled position of this view.
+  /// `offset` relative position to scroll by in logical pixels.
+  Future<void> scrollBy(Offset offset) {
+    return _webViewPlatformController.scrollBy(offset);
+  }
+
+  /// Return the absolute scroll position of this view in logical pixels.
+  Future<Offset> getScrollPosition() {
+    return _webViewPlatformController.getScrollPosition();
+  }
+
+  /// Return the scroll extent of this view in logical pixels.
+  Future<Size> getScrollExtent() {
+    return _webViewPlatformController.getScrollExtent();
+  }
 }
 
 /// Manages cookies pertaining to all [WebView]s.
