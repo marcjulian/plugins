@@ -6,6 +6,10 @@
 #import "FLTWKNavigationDelegate.h"
 #import "JavaScriptChannelHandler.h"
 
+#ifndef MIN
+#import <NSObjCRuntime.h>
+#endif
+
 @implementation FLTWebViewFactory {
   NSObject<FlutterBinaryMessenger>* _messenger;
 }
@@ -150,6 +154,14 @@
     [self clearCache:result];
   } else if ([[call method] isEqualToString:@"getTitle"]) {
     [self onGetTitle:result];
+  } else if ([[call method] isEqualToString:@"scrollTo"]) {
+    [self onScrollTo:call result:result];
+  } else if ([[call method] isEqualToString:@"scrollBy"]) {
+    [self onScrollBy:call result:result];
+  } else if ([[call method] isEqualToString:@"getScrollPosition"]) {
+    [self onGetScrollPosition:result];
+  } else if ([[call method] isEqualToString:@"getScrollExtent"]) {
+    [self onGetScrollExtent:result];
   } else {
     result(FlutterMethodNotImplemented);
   }
@@ -273,6 +285,40 @@
 - (void)onGetTitle:(FlutterResult)result {
   NSString* title = _webView.title;
   result(title);
+}
+
+- (void)scrollWebViewTo:(CGPoint) offset {
+    CGSize contentSize = _webView.scrollView.contentSize;
+    offset.x = MIN(offset.x, contentSize.width - _webView.frame.size.width);
+    offset.y = MIN(offset.y, contentSize.height - _webView.frame.size.height);
+    _webView.scrollView.contentOffset = offset;
+}
+
+- (void)onScrollTo:(FlutterMethodCall*)call result:(FlutterResult)result {
+    NSDictionary* arguments = [call arguments];
+    float x = [arguments[@"x"] floatValue];
+    float y = [arguments[@"y"] floatValue];
+    [self scrollWebViewTo:CGPointMake(x, y)];
+    result(nil);
+}
+
+- (void)onScrollBy:(FlutterMethodCall*)call result:(FlutterResult)result {
+    NSDictionary* arguments = [call arguments];
+    CGPoint contentOffset = _webView.scrollView.contentOffset;
+    float x = [arguments[@"x"] floatValue] + contentOffset.x;
+    float y = [arguments[@"y"] floatValue] + contentOffset.y;
+    [self scrollWebViewTo:CGPointMake(x, y)];
+    result(nil);
+}
+
+- (void)onGetScrollPosition:(FlutterResult)result {
+    CGPoint contentOffset = _webView.scrollView.contentOffset;
+    result(@{ @"x": @(contentOffset.x), @"y": @(contentOffset.y)   });
+}
+
+- (void)onGetScrollExtent:(FlutterResult)result {
+    CGSize contentSize = _webView.scrollView.contentSize;
+    result(@{@"width": @(contentSize.width),@"height": @(contentSize.height)});
 }
 
 // Returns nil when successful, or an error message when one or more keys are unknown.
