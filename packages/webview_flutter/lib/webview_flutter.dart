@@ -13,8 +13,11 @@ import 'platform_interface.dart';
 import 'src/webview_android.dart';
 import 'src/webview_cupertino.dart';
 
+/// Optional callback invoked when a web view is first created. [controller] is
+/// the [WebViewController] for the created web view.
 typedef void WebViewCreatedCallback(WebViewController controller);
 
+/// Describes the state of JavaScript support in a given web view.
 enum JavascriptMode {
   /// JavaScript execution is disabled.
   disabled,
@@ -71,8 +74,14 @@ enum NavigationDecision {
 typedef FutureOr<NavigationDecision> NavigationDelegate(
     NavigationRequest navigation);
 
+/// Signature for when a [WebView] has started loading a page.
+typedef void PageStartedCallback(String url);
+
 /// Signature for when a [WebView] has finished loading a page.
 typedef void PageFinishedCallback(String url);
+
+/// Signature for when a [WebView] has failed to load a resource.
+typedef void WebResourceErrorCallback(WebResourceError error);
 
 /// Specifies possible restrictions on automatic media playback.
 ///
@@ -140,8 +149,11 @@ class WebView extends StatefulWidget {
     this.javascriptChannels,
     this.navigationDelegate,
     this.gestureRecognizers,
+    this.onPageStarted,
     this.onPageFinished,
+    this.onWebResourceError,
     this.debuggingEnabled = false,
+    this.gestureNavigationEnabled = false,
     this.userAgent,
     this.initialMediaPlaybackPolicy =
         AutoMediaPlaybackPolicy.require_user_action_for_all_media_types,
@@ -255,6 +267,9 @@ class WebView extends StatefulWidget {
   ///     * When a navigationDelegate is set HTTP requests do not include the HTTP referer header.
   final NavigationDelegate navigationDelegate;
 
+  /// Invoked when a page starts loading.
+  final PageStartedCallback onPageStarted;
+
   /// Invoked when a page has finished loading.
   ///
   /// This is invoked only for the main frame.
@@ -266,6 +281,12 @@ class WebView extends StatefulWidget {
   /// directly in the HTML has been loaded and code injected with
   /// [WebViewController.evaluateJavascript] can assume this.
   final PageFinishedCallback onPageFinished;
+
+  /// Invoked when a web resource has failed to load.
+  ///
+  /// This can be called for any resource (iframe, image, etc.), not just for
+  /// the main page.
+  final WebResourceErrorCallback onWebResourceError;
 
   /// Controls whether WebView debugging is enabled.
   ///
@@ -279,6 +300,13 @@ class WebView extends StatefulWidget {
   ///
   /// By default `debuggingEnabled` is false.
   final bool debuggingEnabled;
+
+  /// A Boolean value indicating whether horizontal swipe gestures will trigger back-forward list navigations.
+  ///
+  /// This only works on iOS.
+  ///
+  /// By default `gestureNavigationEnabled` is false.
+  final bool gestureNavigationEnabled;
 
   /// The value used for the HTTP User-Agent: request header.
   ///
@@ -374,6 +402,7 @@ WebSettings _webSettingsFromWidget(WebView widget) {
     javascriptMode: widget.javascriptMode,
     hasNavigationDelegate: widget.navigationDelegate != null,
     debuggingEnabled: widget.debuggingEnabled,
+    gestureNavigationEnabled: widget.gestureNavigationEnabled,
     userAgent: WebSetting<String>.of(widget.userAgent),
   );
 }
@@ -451,9 +480,23 @@ class _PlatformCallbacksHandler implements WebViewPlatformCallbacksHandler {
   }
 
   @override
+  void onPageStarted(String url) {
+    if (_widget.onPageStarted != null) {
+      _widget.onPageStarted(url);
+    }
+  }
+
+  @override
   void onPageFinished(String url) {
     if (_widget.onPageFinished != null) {
       _widget.onPageFinished(url);
+    }
+  }
+
+  @override
+  void onWebResourceError(WebResourceError error) {
+    if (_widget.onWebResourceError != null) {
+      _widget.onWebResourceError(error);
     }
   }
 
@@ -590,10 +633,11 @@ class WebViewController {
     final Set<String> channelsToRemove =
         currentChannels.difference(newChannelNames);
     if (channelsToRemove.isNotEmpty) {
-      _webViewPlatformController.removeJavascriptChannels(channelsToRemove);
+      await _webViewPlatformController
+          .removeJavascriptChannels(channelsToRemove);
     }
     if (channelsToAdd.isNotEmpty) {
-      _webViewPlatformController.addJavascriptChannels(channelsToAdd);
+      await _webViewPlatformController.addJavascriptChannels(channelsToAdd);
     }
     _platformCallbacksHandler._updateJavascriptChannelsFromSet(newChannels);
   }
