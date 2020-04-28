@@ -131,13 +131,36 @@ class MethodChannelWebViewPlatform implements WebViewPlatformController {
   @override
   Future<String> getTitle() => _channel.invokeMethod<String>("getTitle");
 
+  @override
+  Future<void> scrollTo(int x, int y) {
+    return _channel.invokeMethod<void>('scrollTo', <String, int>{
+      'x': x,
+      'y': y,
+    });
+  }
+
+  @override
+  Future<void> scrollBy(int x, int y) {
+    return _channel.invokeMethod<void>('scrollBy', <String, int>{
+      'x': x,
+      'y': y,
+    });
+  }
+
+  @override
+  Future<int> getScrollX() => _channel.invokeMethod<int>("getScrollX");
+
+  @override
+  Future<int> getScrollY() => _channel.invokeMethod<int>("getScrollY");
+
   final RegExp _cookieSeparator = RegExp(r';\s*');
   final RegExp _cookieKeyValSeparator = RegExp(r'={1}');
 
   /// Method channel implementation for [WebViewPlatform.getCookies].
   @override
   Future<List<Cookie>> getCookies(String url) async {
-    final String cookieHeader = await _cookieManagerChannel.invokeMethod<String>(
+    final String cookieHeader =
+        await _cookieManagerChannel.invokeMethod<String>(
       'getCookies',
       <String, String>{
         'url': url,
@@ -156,7 +179,9 @@ class MethodChannelWebViewPlatform implements WebViewPlatformController {
       'setCookies',
       <String, dynamic>{
         'url': url,
-        'cookies': cookies.map((Cookie cookie) => cookie.toString()).toList(growable: false),
+        'cookies': cookies
+            .map((Cookie cookie) => cookie.toString())
+            .toList(growable: false),
       },
     );
   }
